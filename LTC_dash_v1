@@ -1,0 +1,130 @@
+## 9/9/24  Data Dashboard Attempt 
+
+## My Goals for this will simple and stupid
+## I want to create a reporting template for both TikTok and Amazon 
+## I want to be able to break data down and see true profit and loss for the current data. 
+
+
+#Before I had to sign off for the day I was able to get the filter logic added and I am currently working through debugging them and making them usable for the user. 
+
+##I am basing this code off the video Budilding a Dashaord web app in Python = Full Streamlit Tutorial ( By Data Professor) & Coding is Fun 
+
+## This method will use a streamlit method. I think this will be the most valueable and the best method for reporting espically for my needs and capabilities. 
+
+
+
+
+## This is the data frame that will be used to call the data used within the dashboard 
+
+##Use panadas to create the data frame
+
+#Import Statements
+import pandas as pd # pip install pandas openpyxl / 
+import streamlit as st # pip install streamlit
+import plotly.express as px #pip intslall plotly-express
+
+#other imports that might be useful later 
+    #import io 
+    #import os 
+
+
+
+#use stream lit to create the dashboard enviornment 
+st.set_page_config(page_title = "Amazon Campaigns 8/19/24 - 9/9/24",
+                   page_icon= ":bar_chart:",
+                   layout="wide", 
+)
+
+
+
+#This is the file path which is how the code will call and update the data 
+file_path = "C:/Users/Admin/Python_Projects/app.csv"
+
+#This is the data frame structure that is used to read the CSV file. This setup is specific to a CSV file only. If you and using an excel file then please use the blanked code below. 
+#df = pd.read_excel(
+   #file_path,
+   #engine = 'openpyxl',
+   #sheet_name = 'app'
+   #skiprows = 3, 
+   #usecols = ['Campaign Name','Status','Targeting Type','Spend','Total Advertising Cost of Sales (ACOS)','7 Day Total Sales','Clicks Before Sale',],
+   #nrows=550, )
+
+df = pd.read_csv(
+    file_path,
+    skiprows = 0,
+    nrows = 550 
+    #usecols = 'Start Date','End Date', 'Portfolio name',"Campaign Type","Campaign Name","Country","Status","Currency","Budget","Targeting Type","Bidding strategy","Impressions","Last Year Impressions","Clicks","Last Year Clicks","Click-Thru Rate (CTR)","Spend,Last Year Spend","Cost Per Click (CPC)","Last Year Cost Per Click (CPC)","7 Day Total Orders (#)","Total Advertising Cost of Sales (ACOS)" ,"Total Return on Advertising Spend (ROAS)","7 Day Total Sales"
+)
+               
+st.dataframe(df)
+
+## Sidebar 
+#This is where the data can be manipulated by the user 
+
+#This is the top of the filter section 
+st.sidebar.header("Filter the data here to find your desired outbreak")
+
+#This is the sectoin where the different filters are available 
+
+#Currently Active or Not 
+inactive_active = st.sidebar.multiselect(
+    "Paused or Enabled",
+    options=df["Status"].unique(),
+    default=df["Status"].unique()
+)
+# This should be perfromance filtering 
+# Low Performer (Highest ACOS, Highest Spend, 0 Sales)
+# Top Seller 
+# Most Viewed Campaigns
+
+#Must use if statements just incase the field is blank 
+# # Since I need to pull data from various columns in order to filter by performance I need to call each one individually.
+
+#if "Spend" in df.columns:
+    #spend_unique = df["Spend"].unique()
+#else:
+    #spend_unique =[]
+
+#if "Total Advertising Cost of Sales (ACOS)" in df.columns:
+    #acos_unique = df["Total Advertising Cost of Sales (ACOS)"].unique()
+#else:
+    #acos_unique =[]
+
+#if "7 day Total Sales" in df.columns:
+    #sales_unique = df["7 day Total Sales"].unique()
+#else:
+    #sales_unique =[]
+
+#if "Impressions" in df.columns:
+    #impressions_unique = df["Impressions"].unique()
+#else:
+    #impressions_unique =[]
+
+top_spender = df.nlargest(50,"Spend")
+bottom_spender = df.nsmallest(50,"Spend")
+
+low_performer = df.nlargest(60,"Total Advertising Cost of Sales (ACOS)")
+high_performer = df.nsmallest(60,"Total Advertising Cost of Sales (ACOS)")
+
+top_seller = df.nlargest(50,"7 day Total Sales")
+bottom_seller = df.nsmallest(50,"7 day Total Sales")
+
+most_viewed = df.nlargest(50,"Impressions")
+least_viewed = df.nsmallest(50,"Impressions")
+
+performance_filter = st.sidebar.multiselect(
+    "Filter Based On Performance (ACOS,Sales,Spend,Impressions)",
+    top_options= list(top_spender["Spend"]) + list(high_performer["Total Advertising Cost of Sales (ACOS)"]) + list(top_seller["7 day Total Sales"]) + list(most_viewed["Impressions"]),
+    bottom_options= list(bottom_spender["Spend"]) + list(low_performer["Total Advertising Cost of Sales (ACOS)"]) + list(bottom_seller["7 day Total Sales"]) + list(least_viewed["Impressions"]),
+)
+
+
+#Duration (Start Day to End Day which campaigns have been running the longest?)
+#Selection 
+
+#df_selection = df.query(
+    #"Status == @inactive_active &
+#)
+
+#st.dataframe(df_selection)
+#use plotly express to create the data visulizations 
