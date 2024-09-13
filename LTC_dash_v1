@@ -128,3 +128,202 @@ performance_filter = st.sidebar.multiselect(
 
 #st.dataframe(df_selection)
 #use plotly express to create the data visulizations 
+#######################  9 / 13/ 24 ######################### 
+
+## This week I learned alot about software dev. This process is pretty fun and can be very rewarding. These are the type of projects I can do that will help me learn the coding assignments they teach in school. 
+
+## The code I was able to finish this week is the following code below ### 
+
+## The immporvements that this code has compared to the pervious code version is that the KPI filters work 100% correct this time. It also has a singluar dataframe and now has a duration filter to show the oldest and youngest campaigns. 
+## Things that the dashboards needs are ? 
+    # Visulizations --> What charts and views would I like to add to the dashboard 
+    # What data breakdowns should this have ?? 
+    # What are key data points that we should be able to see ?? --> Maybe a pie chart that shows the entire breakdown of the what each ASIN goes through on each sale. 
+
+## What are things I want to add ? 
+
+    # I want to be able to add a cache where I can stor e multiple months worth of data in one place. 
+    # I want to be able to have the some visualizations that can be pre-built to match the data frame and will use the data to make certain layouts and veiws available. 
+
+## My Goals for this will simple and stupid
+## I want to create a reporting template for both TikTok and Amazon 
+## This will ultimately be a quarterly reporting device but this can be used to track monthly data.
+## I want to be able to break data down and see true profit and loss for the current data. 
+
+
+##I am basing this code off the video Budilding a Dashaord web app in Python = Full Streamlit Tutorial ( By Data Professor) & Coding is Fun 
+
+## This method will use a streamlit method. I think this will be the most valueable and the best method for reporting espically for my needs and capabilities. 
+
+
+
+
+## This is the data frame that will be used to call the data used within the dashboard 
+
+##Use panadas to create the data frame
+
+#Import Statements
+import datetime
+import pandas as pd # pip install pandas openpyxl / 
+import streamlit as st # pip install streamlit
+import plotly.express as px #pip intslall plotly-express
+import numpy as np # pip install numpy 
+
+#other imports that might be useful later 
+    #import io 
+    #import os 
+
+
+
+#use stream lit to create the dashboard enviornment 
+st.set_page_config(page_title = "Amazon August Preformance Dashboard",
+                   page_icon= ":bar_chart:",
+                   layout="wide", 
+)
+
+
+
+#This is the file path which is how the code will call and update the data 
+file_path = "C:/Users/Admin/Python_Projects/app3.csv"
+
+#This is the data frame structure that is used to read the CSV file. This setup is specific to a CSV file only. If you and using an excel file then please use the blanked code below. 
+#df = pd.read_excel(
+   #file_path,
+   #engine = 'openpyxl',
+   #sheet_name = 'app'
+   #skiprows = 3, 
+   #usecols = ['Campaign Name','Status','Targeting Type','Spend','Total Advertising Cost of Sales (ACOS)','7 Day Total Sales','Clicks Before Sale',],
+   #nrows=550, )
+
+#Pandas Data Frame that pulls the data from the CSV
+
+df = pd.read_csv(
+    file_path,
+    skiprows = 0,
+    nrows = 550 
+    #usecols = 'Start Date','End Date', 'Portfolio name',"Campaign Type","Campaign Name","Country","Status","Currency","Budget","Targeting Type","Bidding strategy","Impressions","Last Year Impressions","Clicks","Last Year Clicks","Click-Thru Rate (CTR)","Spend,Last Year Spend","Cost Per Click (CPC)","Last Year Cost Per Click (CPC)","7 Day Total Orders (#)","Total Advertising Cost of Sales (ACOS)" ,"Total Return on Advertising Spend (ROAS)","7 Day Total Sales"
+)
+
+ #This is the streamlit dataframe defition from the pandas data frame               
+
+
+print(df.columns)
+
+
+
+
+
+###--------------- Sidebar -------------------------### 
+#This is where the data can be manipulated by the user 
+
+#This is the top of the filter section 
+st.sidebar.header("Filter the data here to find your desired outbreak")
+
+#This is the sectoin where the different filters are available 
+
+
+### Filter 1 ### 
+
+# Status (Enabled or Paused) 
+inactive_active = st.sidebar.multiselect(
+    "Status",
+    options=df["Status"].unique(),
+    default=df["Status"].unique()
+)
+
+
+## Filter 2 ###
+
+##This dictionary allows the KPI fitler columns to be mapped and selected down below in the filter button section 
+
+kpi_mapping = {
+    "Spend": "Spend",
+    "(ACOS)" : "(ACOS)",
+    "Sales (7 days)": "Sales (7 days)",
+    "Impressions": "Impressions"
+}
+
+## These are the different filters and this is how the work together in order to update the data view and allow you to see the data you want. 
+performance_kpi = st.sidebar.selectbox("Performance KPI Selector", list(kpi_mapping.keys()))
+performance_order = st.sidebar.selectbox("Select Order", ["Ascending", "Descending"])
+df_filtered = df[df["Status"].isin(inactive_active)]
+
+if performance_kpi:
+    if performance_order == "Ascending":
+        df_filtered = df_filtered.sort_values(by=performance_kpi, ascending=True)
+    else:
+        df_filtered = df_filtered.sort_values(by=performance_kpi, ascending=False)
+
+def filter_data(df, inactive_active, performance_kpi , performance_order):
+    df_filtered = df[df["Status"].isin(inactive_active)]
+    if performance_kpi:
+      df_filtered = df_filtered.sort_values(by=kpi_mapping[performance_kpi], ascending = (performance_order =="Ascending"))
+    return df_filtered
+
+### Filter 4 ### DURATIONS / AGE 
+
+age_options = ["Oldest to Youngest","Youngest to Oldest"]
+age_filter = st.sidebar.selectbox("Age of Campaign Filter", age_options)
+
+def filter_age(df, age_filter):
+    if age_filter == "Oldest to Youngest":
+        df_filtered - df.sort_values(by="Start Date", ascending = True)
+    elif age_filter == "Youngest to Oldest": 
+        df_filtered = df.sort_values(by="Start Date", ascending = False)
+    return df_filtered
+
+
+
+
+
+
+
+
+
+### This is the part of the code that updates the data frame and the includes the filter selections
+
+## This is the part that save the selections on the filters and will update the df   
+df_filtered = filter_data(df,inactive_active,performance_kpi, performance_order)
+## updates data frame with the filtered selections 
+st.dataframe(df_filtered)
+
+
+ 
+
+## 9/11/24 --> The ACOS and Sales sections still do not work also the orginal data Does not appear to get changed. The filtered data gets printed in a new table which can be fine it could just get confusing in the future for others. 
+## Spend and Impressions works perfectly. The ascending and descending order filters work as well with the data along with the status. maybe I should try a singluar selection method for the performance KPI 
+
+
+#use plotly express to create the data visulizations 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
