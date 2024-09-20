@@ -1,0 +1,210 @@
+## 9/18/24  Store Performance Dashboard 
+
+#Import Statements
+import os
+import datetime
+import pandas as pd # pip install pandas openpyxl / 
+import streamlit as st # pip install streamlit
+import plotly.express as px #pip intslall plotly-express
+import numpy as np # pip install numpy 
+import warnings 
+warnings.filterwarnings("ignore")
+
+#other imports that might be useful later 
+    #import io 
+     
+
+
+
+#use stream lit to create the dashboard enviornment 
+st.set_page_config(page_title = "Amazon Stores Preformance Dashboard",
+                   page_icon= ":bar_chart:",
+                   layout="wide", 
+)
+
+
+file_path = "C:/Users/Admin/Python_Projects/app3.csv"
+
+#This is the data frame structure that is used to read the CSV file. This setup is specific to a CSV file only. If you and using an excel file then please use the blanked code below. 
+#df = pd.read_excel(
+   #file_path,
+   #engine = 'openpyxl',
+   #sheet_name = 'app'
+   #skiprows = 3, 
+   #usecols = ['Campaign Name','Status','Targeting Type','Spend','Total Advertising Cost of Sales (ACOS)','7 Day Total Sales','Clicks Before Sale',],
+   #nrows=550, )
+
+#Pandas Data Frame that pulls the data from the CSV
+
+df = pd.read_csv(
+    file_path,
+    skiprows = 0,
+    nrows = 550 
+    #usecols = 'Start Date','End Date', 'Portfolio name',"Campaign Type","Campaign Name","Country","Status","Currency","Budget","Targeting Type","Bidding strategy","Impressions","Last Year Impressions","Clicks","Last Year Clicks","Click-Thru Rate (CTR)","Spend,Last Year Spend","Cost Per Click (CPC)","Last Year Cost Per Click (CPC)","7 Day Total Orders (#)","Total Advertising Cost of Sales (ACOS)" ,"Total Return on Advertising Spend (ROAS)","7 Day Total Sales"
+)
+
+ #This is the streamlit dataframe defition from the pandas data frame               
+ 
+df_untouched = df
+
+print(df.columns)
+# ^^^^^^^^^^^ This will check the column names just to ensure that we can list them right in the dictionary. 
+
+###--------------- SIDEBAR -------------------------### 
+#This is where the data can be manipulated by the user 
+
+#This is the top of the filter section 
+st.sidebar.header("Filter the data here to find your desired outbreak")
+
+#This is the sectoin where the different filters are available 
+### Filter 1 ### 
+
+# Status (Enabled or Paused) 
+inactive_active = st.sidebar.multiselect(
+    "Status",
+    options=df["Status"].unique(),
+    default=df["Status"].unique()
+)
+
+
+## Filters 2 & 3 Perfomance and Order ###
+df_filtered = df[df["Status"].isin(inactive_active)]
+
+### Performance ###
+##This dictionary allows the KPI fitler columns to be mapped and selected down below in the filter button section 
+
+kpi_mapping = {
+    "Spend": "Spend",
+    "(ACOS)" : "(ACOS)",
+    "Sales (7 days)": "Sales (7 days)",
+    "Impressions": "Impressions",
+    "Clicks": "Clicks",
+    "Click-Thru Rate (CTR)":"Click-Thru Rate (CTR)",
+    "Bidding strategy" : "Bidding strategy",
+    "Start Date": "Start Date",
+    "End Date": "End Date",
+    "Portfolio Name" : "Portfolio Name",
+    "Campaign Name" : "Campaign Name",
+    "Status" : "Status", 
+    "Currency" : "Currency",
+    "Targeting Type" : "Targeting Type",
+    "Country" : "Country",
+    "Budget" : "Budget",
+    "Cost Per Click (CPC)":"Cost Per Click (CPC)"
+}
+
+## These are the different filters and this is how the work together in order to update the data view and allow you to see the data you want. 
+performance_kpi = st.sidebar.selectbox("Performance KPI Selector", list(kpi_mapping.keys()))
+performance_order = st.sidebar.selectbox("Select Order", ["Ascending", "Descending"])
+
+
+### This is the final compenet of the filter that will sort the data by ascending / descending and keep the selected features. 
+if performance_kpi:
+    if performance_order == "Small":
+        df_filtered = df_filtered.sort_values(by=performance_kpi, ascending=True)
+    else:
+        df_filtered = df_filtered.sort_values(by=performance_kpi, ascending=False)
+
+
+if 'df_filtered' not in st.session_state:
+    st.session_state.df_filtered = df
+
+def filtered_data(df, inactive_active, performance_kpi, performance_order):
+    df_filtered = df[df["Status"].isin(inactive_active)]
+    if performance_kpi:
+        if performance_order == "Ascending":
+            df_filtered = df_filtered.sort_values(by=kpi_mapping[performance_kpi], ascending=True)
+        else:
+            df_filtered = df_filtered.sort_values(by=kpi_mapping[performance_kpi], ascending=False)
+        total_sales = df_filtered['Sales (7 days)'].sum()
+        total_spend = df_filtered['Spend'].sum()
+        total_impressions = df_filtered['Impressions'].sum()
+        total_acos = df_filtered['(ACOS)'].mean()
+        total_roas = df_filtered['(ROAS)'].mean()
+
+        ## Campaign with the most sales logic ##
+        highest_selling_campaign = df_filtered.loc[df_filtered['Sales (7 days)'].idxmax()]['Campaign Name'] 
+        highest_selling_campaign_value = df_filtered['Sales (7 days)'].max()
+
+        ## Campaign with the highest spend logic ##
+        highest_spend_campaign = df_filtered.loc[df_filtered['Spend'].idxmax()]['Campaign Name'] 
+        highest_spend_campaign_value = df_filtered['Spend'].max()
+        
+        ## Campaign with the most impressions logic ##
+        highest_impressions_campaign = df_filtered.loc[df_filtered['Impressions'].idxmax()]['Campaign Name'] 
+        highest_impressions_campaign_value = df_filtered['Impressions'].max()
+        
+
+        ## Campaign with the largest cpc logic ##
+        largest_cpc_campaign = df_filtered.loc[df_filtered['Cost Per Click (CPC)'].idxmax()]['Campaign Name'] 
+        largest_cpc_campaign_value = df_filtered['Cost Per Click (CPC)'].max()
+        
+        # Create the header section
+        st.header("Monthly Performance of your Amazon Store", divider = 'rainbow')
+        st.header(f"Total Sales: ${total_sales:,.2f}",divider = 'rainbow') 
+        st.header(f"Spend: ${total_spend:,.2f}",divider = 'rainbow')
+        st.header(f"Impressions: {total_impressions:,}", divider = 'rainbow')
+        st.header(f"ACOS: {total_acos:,.3f}",divider = 'rainbow')
+        st.header(f"ROAS: {total_roas:,.2f} ", divider = 'rainbow')
+        return df_filtered
+
+st.session_state.df_filtered = filtered_data(st.session_state.df_filtered, inactive_active, performance_kpi, performance_order)
+## This will now call the selected values. ^^^^^^
+
+## updates data frame with the filtered selections 
+st.dataframe(st.session_state.df_filtered)
+
+
+####### VISUALIZATIONS OF DATA #######
+
+### Show the contribution to revenue by each campaign on the list ### 
+
+### These are 3 bar charts of the campaigns and the three most important metrics and they can be filtered aswell. 
+
+## This part of the code creates the logic for the charts that will be plotted in the next series of code. ## 
+
+
+
+
+## Bar Charts ## 
+campaign_spend_barchart = px.bar(st.session_state.df_filtered, x="Spend", y="Campaign Name", color="Status")
+campaign_acos_barchart = px.bar(st.session_state.df_filtered, x="(ACOS)", y="Campaign Name", color="Status")
+campaign_sales_barchart = px.bar(st.session_state.df_filtered, x="Sales (7 days)", y="Campaign Name", color="Status")
+campaign_impressions_barchart = px.bar(st.session_state.df_filtered, x="Impressions", y="Campaign Name", color="Status")
+campaign_cpc_barchart = px.bar(st.session_state.df_filtered, x="Cost Per Click (CPC)", y="Campaign Name", color="Status")
+
+## Line Graphs ## 
+campaign_spend_linegraph = px.line(st.session_state.df_filtered, x="Campaign Name", y="Spend", color="Status")
+campaign_acos_linegraph = px.line(st.session_state.df_filtered, x="Campaign Name", y="(ACOS)", color="Status")
+campaign_sales_linegraph = px.line(st.session_state.df_filtered, x="Campaign Name", y="Sales (7 days)", color="Status")
+
+
+## customizing the visualizations ##
+campaign_spend_barchart.update_layout(title="The Monthly Total Spend of each Campaign", xaxis_title="Spend", yaxis_title = "Camapign Name")
+campaign_acos_barchart.update_layout(title="The Monthly Total (ACOS) of each Campaign", xaxis_title="(ACOS)", yaxis_title = "Camapign Name")
+campaign_sales_barchart.update_layout(title="The Monthly Total Sales from each Campaign", xaxis_title="Sales (7 days)", yaxis_title = "Camapign Name")
+campaign_impressions_barchart.update_layout(title="The amount of impressions gained from each Campaign", xaxis_title="Impressions", yaxis_title = "Camapign Name")
+campaign_cpc_barchart.update_layout(title="The average cost per click per campaign", xaxis_title="CPC", yaxis_title = "Camapign Name")
+
+## the plotting functions ## 
+
+## All Campaign Sales Visulizations ##
+st.plotly_chart(campaign_sales_barchart, use_container_width = True)
+
+
+
+## All Campaign Spend Visulizations ##
+st.plotly_chart(campaign_spend_barchart, use_container_width = True)
+
+
+## All Campaign ACOS Visulizations ##
+st.plotly_chart(campaign_acos_barchart, use_container_width = True)
+
+## All Campaign Impressions Visulizations ##
+
+st.plotly_chart(campaign_impressions_barchart, use_container_width = True)
+
+## All Campaign CPC Visulizations ##
+
+st.plotly_chart(campaign_cpc_barchart, use_container_width = True)
+
