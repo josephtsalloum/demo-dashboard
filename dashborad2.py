@@ -1,9 +1,10 @@
 ### 10/11/24 ### 
 ### Dashboard_v2 ### 
-### Todays dev plan 
-    ### build funcitons that can call all of the graphs of make each kpi their own function so that editing a compenent of the dash is optimized
-    ### make KPI functions with indepdent df. 
 
+### 10/11 Coding Recap 
+    # Today was a very productive day as I was able to basically recreate the entire dashboard the way I needed to in order to generate the reports for each KPI and have them deployable from the sidebar of the APP 
+    # I might want to call that selectionbox something else like Reports 
+    # Make more data visualization files that I can just make functions and call them to the main file so my main isn't so cluttered. I am getting annoyed with all of the functions and the clutter on the worksheet. 
 
 import streamlit as st 
 import pandas as pd 
@@ -54,7 +55,7 @@ df_filtered_campaignreport
 ### Report View Filter ### 
 
 ### This filter will generate the Users Desired Report to help them make certain marketing Decisions ### 
-kpi_selectbox = st.sidebar.selectbox("Select KPI",["Spend","Sales (7 days)","(ACOS)"])
+kpi_selectbox = st.sidebar.selectbox("Select KPI",["Spend","Sales (7 days)","(ACOS)","Impressions","Clicks","Click-Thru Rate (CTR)","Cost Per Click (CPC)","Clicks"])
 
 def generate_report(kpis):
     # Dictionary that will house all the reports
@@ -71,20 +72,60 @@ def generate_report(kpis):
 
     ## loop that will collect all the user input and generate the reports ## 
     for kpi in kpis:
+        
         if kpi == "Spend":
+            st.text("This is your Spend Report")
             chart = px.bar(df_filtered_campaignreport, x="Campaign Name", y="Spend")
-            df_spendreport = df_campaignreport(["Campaign Name","Status","Spend",])
-            df_spendreport
+            df_report = df_campaignreport(["Campaign Name","Status","Spend",])
+            df_report
+        
         elif kpi == "Sales (7 days)":
+            st.text("This is your Sales (7 days) Report")
             chart = px.bar(df_filtered_campaignreport,x="Campaign Name", y="Sales(7 days)")
-            df_salesreport = df_campaignreport(["Campaign Name", "Status","Sales (7 days)"])
-            df_salesreport
+            df_report = df_campaignreport(["Campaign Name", "Status","Sales (7 days)"])
+            df_report
+        
         elif kpi == "(ACOS)":
+            st.text("This is your ACOS Report")
             chart = px.bar(df_filtered_campaignreport,x="Campaing Name",y="(ACOS)")
-            df_acosreport = df_campaignreport(["Campaign Name","Status","(ACOS)"])
+            df_report = df_campaignreport(["Campaign Name","Status","(ACOS)"])
+            df_report
+        
+        elif kpi == "Impressions":
+            st.text("This is your Impressions Report")
+            chart = px.bar(df_filtered_campaignreport,x="Campaing Name",y="Impressions")
+            df_acosreport = df_campaignreport(["Campaign Name","Status","Impresssions"])
+            df_report
+        
+        elif kpi == "Clicks":
+            st.text("This is your Campaign Click Report")
+            chart = px.bar(df_filtered_campaignreport,x="Campaing Name",y="Clicks")
+            df_acosreport = df_campaignreport(["Campaign Name","Status","Impressions","Clicks"])
+            df_report
 
+        elif kpi == "Click-Thru Rate (CTR)":
+            st.text("This is your Click-Thru Rate Report")
+            chart = px.bar(df_filtered_campaignreport,x="Campaing Name",y="Click-Thru Rate(CTR)")
+            df_report = df_campaignreport(["Campaign Name","Status","Impressions","Clicks","Click-Thru Rate(CTR)"])
+            df_report
+     
+        elif kpi == "Cost Per Click (CPC)":
+            st.text("This is your Cost Per Click Report")
+            chart = px.bar(df_filtered_campaignreport,x="Campaing Name",y="Cost Per Click (CPC)")
+            df_report = df_campaignreport(["Campaign Name","Status","Impressions","Clicks","Cost Per Click (CPC)"])
+            df_report
 
+        print(f'Chart: {chart}')
+        print(f'Data of the Report: {df_report}')
+    return reports
 
+if st.sidebar.button("Generate Report"):
+    reports = generate_report(kpi_selectbox)
+
+    for kpi, report in reports.items():
+        st.header(kpi)
+        st.plotly_chart(report("chart"))
+        st.write(report("df"))
 
 
 
